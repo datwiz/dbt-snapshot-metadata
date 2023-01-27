@@ -1,0 +1,10 @@
+txn_date,thing_id,status,description
+2023-01-24,1,PENDING,new thing about to arrive
+2023-01-24,2,CLOSED,thing finished
+2023-01-24,3,OPEN,thing in progress
+2023-01-24,4,CLOSED,thing finished with issues
+2023-01-25,1,OPEN,thing in progress
+2023-01-25,4,OPEN,thing re-opened
+2023-01-26,1,CLOSED,thing finished
+2023-01-26,3,CANCELED,cancelled a thing
+2023-01-26,4,CLOSED,thing closed
