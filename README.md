@@ -108,7 +108,7 @@ To update fields on snapshot update override the following default macro:
 
 Note that if the dbt database adaptor implements adaptor specific versions of these macros, then update
 the adaptor specific macro accordingly.  For example the [dbt-spark](https://github.com/dbt-labs/dbt-spark/blob/main/dbt/include/spark/macros/materializations/snapshot.sql) adaptor overrides the
-dbt `default__snapshot_merge_sql()`
+dbt `default__snapshot_merge_sql()` as `spark__snapshot_merge_sql()`.
 
 ### build_snapshot_table()
 The [default__build_snapshot_table()](./dbt_snapshot_ops_metadata/macros/default__build_snapshot_table.sql) macro is called on the first `dbt snapshot` invocation.  This
