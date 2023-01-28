@@ -22,14 +22,49 @@ Some example considerations could include:
   - when new records are inserted, add operational processing metadata information to each record
   - when an existing record is closed or end-dated, update operational metadata fields with operational processing metadata
 
-Example snapshot table out-of-the-box
+```mermaid
+---
+title: Example snapshot table out-of-the-box
+---
+erDiagram
+  BASIC_THING {
+    date txn_dt
+    int id
+    string status
+    string dbt_scd_id
+    datetime dbt_updated_at
+    datetime dbt_valid_from
+    datetime dbt_valid_to
+  }
+
+```
 | txn_dt | id | status | dbt_scd_id | dbt_updated_at | dbt_valid_from | dbt_valid_to |
 | ------ | -- | ------ | ---------- | -------------- | -------------- | ------------ |
 | 2023-01-24 | 1      | PENDING | _dbt-scd-id_ | _dttm-0_ | _dttm-0_ | _dttm-1_ |
 | 2023-01-25 | 1      | OPEN    | _dbt-scd-id_ | _dttm-1_ | _dttm-1_ | _dttm-2_ |
 | 2023-01-26 | 1      | CLOSED  | _dbt-scd-id_ | _dttm-2_ | _dttm-2_ | NULL     |
 
-Example snapshot table with enhanced metadata
+```mermaid
+---
+title: Example snapshot table with enhanced metadata
+---
+erDiagram
+  ENHANCED_THING {
+    date txn_dt
+    int id
+    string status
+    string insert_id
+    string update_id
+    timestamp start_dttm
+    timestamp end_dttm
+    timestamp insert_dttm
+    timestamp update_dttm
+    string dbt_scd_id
+    datetime dbt_updated_at
+    datetime dbt_valid_from
+    datetime dbt_valid_to
+  }
+```
 | txn_dt | id | status| insert_id | update_id | start_dttm | end_dttm | insert_dttm | update_dttm | ... dbt-metadata-fields ... |
 | -------- | --- | ----- | ----- | ---- | ----- | ---------- | -------------- | -------------- | ------------ |
 | 2023-01-24 | 1      | PENDING | proc-A | proc-B | _dttm-0_ |  _dttm-1_ | _dttm-0_ | _dttm-1_ | _dbt-metadata-fields_ |
