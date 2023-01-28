@@ -64,17 +64,17 @@ vs additional storage requirements.
 
 ### NULLS vs High End Date/Timestamp
 In addition to the ops support and audit requirements, there can also be a legacy migration complication
-related to how open records (the most current version of the record) are represented snapshots.  dbt snapshots
-represent open records using `NULL` values for `valid_to` fields.
-In legacy data lakes or data warehouses, the open records often are identified by using a
+related to how open records (the most current version of the record) are represented in snapshots.  dbt snapshots
+represent open records using `NULL` values for `dbt_valid_to` fields.
+In legacy data lakes or data warehouses, the open records often are identified using a
 well-known high value for the effective end date/timestamp, such as `9999-12-31` or `9999-12-31 23:59:59`.  Adding
 additional snapshot metadata columns enables a legacy view of record changes without having to alter the
 dbt snapshot strategy or processing logic.
 
 
 Note that transitioning to the use of `NULL` values for the `valid_to` end date/timestamp value for open records
-is `HIGHLY` recommended, especially if porting to a new database platform or cloud based service.  On-premise
-legacy database platforms often use `TIMESTAMP` values without inclusion of timezones or timezone offests
+is `HIGHLY` recommended, especially when porting to a new database platform or cloud based service.  On-premise
+legacy database platforms often use `TIMESTAMP` values without inclusion of timezones or timezone offsets
 relying on a system wide default timezone setting.
 Different databases may also have different millisecond precision for `TIMESTAMP` columns.
 When migrating to a new database platform, both precision and timezone treatment can cause unexpected issues.
@@ -93,19 +93,20 @@ The use of `NULL` values for open records/`valid_to` fields avoids this risk of 
 
 ## Enhancing the default Snapshot
 Modify the default dbt snapshot behaviour by overriding the [dbt snapshot materialization macros](https://github.com/dbt-labs/dbt-core/tree/main/core/dbt/include/global_project/macros/materializations/snapshots).
-dbt enbles customisation of macros using the following resolution or search order:
-* locally defined macros in the project's ./macros directory
-* macros defined in additional dbt packages included in the project `packages.yml` file
-* dbt provided macros
+dbt enbles macros to be overriden using the following resolution or search order:
+1. locally defined macros in the project's ./macros directory
+2. macros defined in additional dbt packages included in the project `packages.yml` file
+3. dbt adaptor specific macros
+3. dbt provided default macros
 
-To inject additional snapshot metadata fields into in snapshot tables override the following two default macros:
+To inject additional snapshot metadata fields into snapshot tables override the following two default macros:
 * `default__build_snapshot_table()` creates the snapshot table on first run
 * `default__snapshot_staging_table()` stages in the inserts and updates to be applied to the snapshot table
 
-To update fields on an snapshot update override the following default macro:
+To update fields on snapshot update override the following default macro:
 * `default__snapshot_merge_sql()` performs the MERGE/UPSERT 
 
-Note that if the dbt database adaptor implements customised versions of these macros, then update
+Note that if the dbt database adaptor implements adaptor specific versions of these macros, then update
 the adaptor specific macro accordingly.  For example the [dbt-spark](https://github.com/dbt-labs/dbt-spark/blob/main/dbt/include/spark/macros/materializations/snapshot.sql) adaptor overrides the
 dbt `default__snapshot_merge_sql()`
 
