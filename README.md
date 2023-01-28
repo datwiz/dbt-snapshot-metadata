@@ -62,24 +62,24 @@ erDiagram
 ```
 ![enhanced snapshot table](./images/enhanced-snapshot-table.png)
 
+Note that with the inclusion of an `insert_id` in the snapshot input dbt model/view the same operational metadata contained
+in the enhanced table could be derived, but requires more complex SQL with a left outer self-join.  As with any
+materialization decision, there is the trade off between ease of access vs additional storage requirements.
 
-### Bonus - High End Date/Timestamp
+### NULLS vs High End Date/Timestamp
 In addition to the operational support and audit requirements, there can also be a legacy migration complication
-related to how open records (the most current version of the record) are represented snapshots.  In dbt snapshots,
-open records represented using `NULL` values for `valid_to` fields, as opposed to a well-known high value for date
-or timestamp fields.  In legacy data lakes or data warehouses, the open records often are identified by using a
-well-knowb high value for the effective end date/timestamp, such as `9999-12-31` or `9999-12-31 23:59:59`.  Adding
+related to how open records (the most current version of the record) are represented snapshots.  dbt snapshots
+represent open records using `NULL` values for `valid_to` fields.
+In legacy data lakes or data warehouses, the open records often are identified by using a
+well-known high value for the effective end date/timestamp, such as `9999-12-31` or `9999-12-31 23:59:59`.  Adding
 additional snapshot metadata columns enables a legacy view of record changes without having to alter the
 dbt snapshot strategy or processing logic.
 
-```mermaid
-title example high dttm values
-```
 
 Note that transitioning to the use of `NULL` values for the `valid_to` end date/timestamp value for open records
 is `HIGHLY` recommended, especially if porting to a new database platform or cloud based service.  On-premise
-legacy database platforms often use `TIMESTAMP` values without inclusion of timezones or timezone offests and
-rely on a system wide default timezone setting.
+legacy database platforms often use `TIMESTAMP` values without inclusion of timezones or timezone offests
+relying on a system wide default timezone setting.
 Different databases may also have different millisecond precision for `TIMESTAMP` columns.
 When migrating to a new database platform, both precision and timezone treatment can cause unexpected issues.
 
@@ -93,8 +93,6 @@ timestamp('9999-12-31 23:59:59.999999', 'Australia/Melbourne')
 ```
 will silently convert the localised timestamp to UTC `9999-12-31 23:59:59.999999+00`
 
-Using `NULL` values for open records/`valid_to` fields avoids this risk of subtle breakage.
+The use of `NULL` values for open records/`valid_to` fields avoids this risk of subtle breakage.
 
-## Out-of-the-Box dbt Snaphots
-
-## Overriding Snapshot behaviour
+## Enhancing the default Snapshot
