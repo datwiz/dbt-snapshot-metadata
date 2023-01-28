@@ -96,3 +96,118 @@ will silently convert the localised timestamp to UTC `9999-12-31 23:59:59.999999
 The use of `NULL` values for open records/`valid_to` fields avoids this risk of subtle breakage.
 
 ## Enhancing the default Snapshot
+Modify the default dbt snapshot behaviour by overriding the [dbt snapshot materialization macros](https://github.com/dbt-labs/dbt-core/tree/main/core/dbt/include/global_project/macros/materializations/snapshots).
+dbt enbles customisation of macros using the following resolution or search order:
+* locally defined macros in the project's ./macros directory
+* macros defined in additional dbt packages included in the project `packages.yml` file
+* dbt provided macros
+
+To inject additional snapshot metadata fields into in snapshot tables override the following two default macros:
+* `default__build_snapshot_table()` creates the snapshot table on first run
+* `default__snapshot_staging_table()` stages in the inserts and updates to be applied to the snapshot table
+
+To update fields on an snapshot update override the following default macro:
+* `default__snapshot_merge_sql()` performs the MERGE/UPSERT 
+
+Note that if the dbt database adaptor implements customised versions of these macros, then update
+the adaptor specific macro accordingly.  For example the [dbt-spark](https://github.com/dbt-labs/dbt-spark/blob/main/dbt/include/spark/macros/materializations/snapshot.sql) adaptor overrides the
+dbt `default__snapshot_merge_sql()`
+
+### build_snapshot_table()
+The [default__build_snapshot_table()](./dbt_snapshot_ops_metadata/macros/default__build_snapshot_table.sql) macro is called on the first `dbt snapshot` invocation.  This
+macro defines the content to include in the `CREATE TABLE` statement.  The following example adds 
+process id's using the dbt `invocation_id` and adds additional timestamp fields, including use of the
+well-known high timestamp value for open records.  This value is defined as the variable `default_high_dttm`
+in the `dbt_project.yml` file.  The dbt snapshot strategy processing uses the unmodified
+standard dbt columns so modifications to processing code is not required.
+
+dbt project macro `./macros/default__build_snapshot_table.sql`
+```
+{% macro default__build_snapshot_table(strategy, sql) %}
+{#- customised snapshot table to inject additional operational metadata #}
+
+    select *, 
+        {#- additional operational metadata fields #}
+        cast("{{ invocation_id }}" as STRING) as INSERT_PROCESS_ID,
+        cast(NULL as STRING) as UPDATE_PROCESS_ID,
+        {{ strategy.updated_at }} as EFFECTIVE_START_TIMESTAMP,
+        cast("{{ var('default_high_dttm') }}" as TIMESTAMP) as EFFECTIVE_END_TIMESTAMP,
+        {{ strategy.updated_at }} as INSERT_TIMESTAMP,
+        cast(NULL as TIMESTAMP) as UPDATE_TIMESTAMP,
+
+        {#- dbt standard snapshot fields #}
+        {{ strategy.scd_id }} as dbt_scd_id,
+        {{ strategy.updated_at }} as dbt_updated_at,
+        {{ strategy.updated_at }} as dbt_valid_from,
+        nullif({{ strategy.updated_at }}, {{ strategy.updated_at }}) as dbt_valid_to
+    from (
+        {{ sql }}
+    ) sbq
+
+{% endmacro %}
+```
+
+### snapshot_staging_table()
+The [default__snapshot_staging_table()](./dbt_snapshot_ops_metadata/macros/default__snapshot_staging_table.sql) macro is called on subsequent `dbt snapshot` invocations.  This macro
+defines the content to include in the `MERGE` statement for inserts and updates.  The following example adds
+the additional operational metadata fields to the `insertions` common table expression (CTE) and the `updates` (CTE).
+The dbt `invocation_id` is used again as the `process_id` for inserts on new records and updates that
+close old records.
+
+```
+    ...
+    insertions as (
+
+        select
+            'insert' as dbt_change_type,
+            source_data.*,
+            {#- additional operational metadata fields #}
+            cast("{{ invocation_id }}" as STRING) as INSERT_PROCESS_ID,
+            cast(NULL as STRING) as UPDATE_PROCESS_ID,
+            {{ strategy.updated_at }} as EFFECTIVE_START_TIMESTAMP,
+            cast("{{ var('default_high_dttm') }}" as TIMESTAMP) as EFFECTIVE_END_TIMESTAMP,
+            {{ strategy.updated_at }} as INSERT_TIMESTAMP,
+            cast(NULL as TIMESTAMP) as UPDATE_TIMESTAMP
+        from insertions_source_data as source_data
+        left outer join snapshotted_data on snapshotted_data.dbt_unique_key = source_data.dbt_unique_key
+        where snapshotted_data.dbt_unique_key is null
+           or (
+                snapshotted_data.dbt_unique_key is not null
+            and (
+                {{ strategy.row_changed }}
+            )
+        )
+
+    ),
+
+    updates as (
+
+        select
+            'update' as dbt_change_type,
+            source_data.*,
+            snapshotted_data.dbt_scd_id,
+            {#- additional operational metadata fields #}
+            snapshotted_data.INSERT_PROCESS_ID,
+            cast("{{ invocation_id }}" as STRING) as UPDATE_PROCESS_ID,
+            snapshotted_data.EFFECTIVE_START_TIMESTAMP,
+            {{ strategy.updated_at }} as EFFECTIVE_END_TIMESTAMP,
+            snapshotted_data.INSERT_TIMESTAMP,
+            {{ strategy.updated_at }} UPDATE_TIMESTAMP
+        from updates_source_data as source_data
+        join snapshotted_data on snapshotted_data.dbt_unique_key = source_data.dbt_unique_key
+        where (
+            {{ strategy.row_changed }}
+        )
+    )
+    ...
+```
+Note that the `deletes` CTE has not been updated with the additional fields.  In scenarios that use the 
+hard deletes feature, the `deletes` CTE would need to be modified as well.
+
+### snapshot_merge_sql()
+
+## Conclusion
+Overriding the default dbt snapshot macros enables the injection and updating of additional operational
+metadata in snapshot tables.  Fields can be added such that the provided dbt logic and snapshot
+strategy processing is still applied, but the resulting snapshot tables contain the columns required
+for the data lake or data warehouse.
