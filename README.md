@@ -113,10 +113,10 @@ dbt `default__snapshot_merge_sql()` as `spark__snapshot_merge_sql()`.
 ### build_snapshot_table()
 The [default__build_snapshot_table()](./dbt_snapshot_ops_metadata/macros/default__build_snapshot_table.sql) macro is called on the first `dbt snapshot` invocation.  This
 macro defines the content to include in the `CREATE TABLE` statement.  The following example adds 
-process id's using the dbt `invocation_id` and adds additional timestamp fields, including use of the
+process id's using the dbt `invocation_id` and additional timestamp fields, including use of the
 well-known high timestamp value for open records.  This value is defined as the variable `default_high_dttm`
 in the `dbt_project.yml` file.  The dbt snapshot strategy processing uses the unmodified
-standard dbt columns so modifications to processing code is not required.
+standard dbt columns so modifications to change detection logic is not required.
 
 dbt project macro `./macros/default__build_snapshot_table.sql`
 ```sql
@@ -149,8 +149,9 @@ The [default__snapshot_staging_table()](./dbt_snapshot_ops_metadata/macros/defau
 defines the content to include in the `MERGE` statement for inserts and updates.  The following example adds
 the additional operational metadata fields to the `insertions` common table expression (CTE) and the `updates` (CTE).
 The dbt `invocation_id` is used again as the `process_id` for inserts on new records and updates that
-close old records.
+close existing records.
 
+dbt project macro `./macros/default__snapshot_staging_table()`
 ```sql
     ...
     insertions as (
@@ -205,6 +206,8 @@ hard deletes feature, the `deletes` CTE would need to be modified as well.
 The [default__snapshot_merge_sql()](./dbt_snapshot_ops_metadata/macros/default__snapshot_merge_sql.sql) macro is called to perform the MERGE/UPSERT into the target snapshot
 table.  This macro defines how fields in the records being closed should be updated.  The `update set`
 section of the `MERGE` statement defines the update columns and values.
+
+dbt project macro `./macros.default__snapshot_merge_sql()`
 ```sql
 {% macro default__snapshot_merge_sql(target, source, insert_cols) -%}
 {#- customised snapshot merge statement to update additional operational metadata #}
