@@ -1,45 +1,57 @@
 # Adding Operational Metadata to dbt Snapshots
-dbt provides out-of-the-box change data capture functionality for tracking changes to data in your data lake or
-data warehouse through the (dbt snapshot)[https://docs.getdbt.com/docs/build/snapshots] features.  This includes
-support for several strategies (`timestamp` and `check_cols`) for detecting change.  In addition, the documentation
-provides guidance on implementing (custom change detection strategies)[https://docs.getdbt.com/reference/resource-configs/strategy#advanced-define-and-use-custom-snapshot-strategy].
+The out-of-the-box [dbt snapshots](https://docs.getdbt.com/docs/build/snapshots) provide change data capture (CDC) capability for tracking the changes to data in your
+data lake or data warehouse.  The dbt snapshot metadata columns enable a view of change to data - which records 
+have been updated when.   However, the dbt snapshot metadata doesn't provide a view of processing audit - which process
+or job was responsible for the changes.  Additional operational metadata is required for process level auditability.
 
-Those two default strategies often meet the change detection requirements for a project, but in some implementations
-there is a requirement for a more detailed set of operational metadata, e.g.  which process was responsible for which
-change to data in the data lake or data warehouse.  This could be driven by either operational requirements or compliance
-requirements, or both.
-
-To enable greater operational visibility and auditiable governance, injecting additional operational metadata
-in addition to the standard dbt snapshot fields.
+In those cases where greater operational visibility is required, the dbt snapshot behaviour (snapshot strategies)
+may provide the right logic for detecting and managing data change.  No change to the change detection strategy
+or snapshot sequence of pipeline processing is desired, but additional operational metadata fields should be set and
+carried through the processing pipeline along with the data.
 
 ## Objectives
 The need for greater fidelity of operational metadata can be driven by both operational and governance requirements.
-The following considerations are addressed:
+Some example considerations could include:
 * use the out-of-the-box dbt snapshot logic and strategies for Change Data Capture (CDC)
 * add operational metadata fields to snapshot tables with processing details for operational support and audit
-* when new records are inserted, add operational processing metadata information to each record
-* when an existing record is closed or end-dated, update operational metadata fields with operational processing metadata
-* accomodate a legacy requirement for the high end timestamp to have a non-null value
+  - when new records are inserted, add operational processing metadata information to each record
+  - when an existing record is closed or end-dated, update operational metadata fields with operational processing metadata
 
-### Note on High End Dates/Timestamps
-Many legacy systems use a high value, such as '9999-12-31' or '999-12-31 23:59:59.999999' for the end date/time values
-for open records.  In many cases, those legacy systems haven't had to considerin timezone implications, e.g. a default
-timezone for the database or timestamp precision, e.g. number of milliseconds to include in the high datetime value.
-Using `NULL` values for the end date/time value for open records is `HIGHLY` recommended.
+```mermaid
+title before and after snapshot tables
+```
 
-For example, the BigQuery
+### Bonus - High End Date/Timestamp
+In addition to the operational support and audit requirements, there can also be a legacy migration complication
+related to how open records (the most current version of the record) are represented snapshots.  In dbt snapshots,
+open records represented using `NULL` values for `valid_to` fields, as opposed to a well-known high value for date
+or timestamp fields.  In legacy data lakes or data warehouses, the open records often are identified by using a
+well-knowb high value for the effective end date/timestamp, such as `9999-12-31` or `9999-12-31 23:59:59`.  Adding
+additional snapshot metadata columns enables a legacy view of record changes without having to alter the
+dbt snapshot strategy or processing logic.
+
+```mermaid
+title example high dttm values
+```
+
+Note that transitioning to the use of `NULL` values for the `valid_to` end date/timestamp value for open records
+is `HIGHLY` recommended, especially if porting to a new database platform or cloud based service.  On-premise
+legacy database platforms often use `TIMESTAMP` values without inclusion of timezones or timezone offests and
+rely on a system wide default timezone setting.
+Different databases may also have different millisecond precision for `TIMESTAMP` columns.
+When migrating to a new database platform, both precision and timezone treatment can cause unexpected issues.
+
+For example, in BigQuery
 ```
 datetime('9999-12-31 23:59:59.999999', 'Australia/Melbourne')
 ```
-will generate an error, while
+will generate an invalid value error, while
 ```
 timestamp('9999-12-31 23:59:59.999999', 'Australia/Melbourne')
 ```
 will silently convert the localised timestamp to UTC `9999-12-31 23:59:59.999999+00`
 
-However, in some instances, the change from high date/time values to NULL values for the high end date/time of open
-records has to be perserved.  This example provides one possible solution for including non-null high end date/time
-values.
+Using `NULL` values for open records/`valid_to` fields avoids this risk of subtle breakage.
 
 ## Out-of-the-Box dbt Snaphots
 
