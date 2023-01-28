@@ -205,9 +205,42 @@ Note that the `deletes` CTE has not been updated with the additional fields.  In
 hard deletes feature, the `deletes` CTE would need to be modified as well.
 
 ### snapshot_merge_sql()
+The [default__snapshot_merge_sql()](./dbt_snapshot_ops_metadata/macros/default__snapshot_merge_sql.sql) macro is called to perform the MERGE/UPSERT into the target snapshot
+table.  This macro defines how fields in the records being closed should be updated.  The `update set`
+section of the `MERGE` statement defines the update columns and values.
+```sql
+{% macro default__snapshot_merge_sql(target, source, insert_cols) -%}
+{#- customised snapshot merge statement to update additional operational metadata #}
+    {%- set insert_cols_csv = insert_cols | join(', ') -%}
+
+    merge into {{ target }} as DBT_INTERNAL_DEST
+    using {{ source }} as DBT_INTERNAL_SOURCE
+    on DBT_INTERNAL_SOURCE.dbt_scd_id = DBT_INTERNAL_DEST.dbt_scd_id
+
+    when matched
+     and DBT_INTERNAL_DEST.dbt_valid_to is null
+     and DBT_INTERNAL_SOURCE.dbt_change_type in ('update', 'delete')
+        then update
+        set 
+            dbt_valid_to = DBT_INTERNAL_SOURCE.dbt_valid_to,
+            {#- additional operational metadata fields to be updated #}
+            EFFECTIVE_END_TIMESTAMP = DBT_INTERNAL_SOURCE.EFFECTIVE_END_TIMESTAMP,
+            UPDATE_PROCESS_ID = DBT_INTERNAL_SOURCE.UPDATE_PROCESS_ID,
+            UPDATE_TIMESTAMP = DBT_INTERNAL_SOURCE.UPDATE_TIMESTAMP
+
+    when not matched
+     and DBT_INTERNAL_SOURCE.dbt_change_type = 'insert'
+        then insert ({{ insert_cols_csv }})
+        values ({{ insert_cols_csv }})
+
+{% endmacro %}
+```
 
 ## Conclusion
 Overriding the default dbt snapshot macros enables the injection and updating of additional operational
 metadata in snapshot tables.  Fields can be added such that the provided dbt logic and snapshot
 strategy processing is still applied, but the resulting snapshot tables contain the columns required
 for the data lake or data warehouse.
+
+The sample dbt project in [dbt_snapshot_ops_metadata](./dbt_snapshot_opsmetadata) contains an implementation
+of the snapshot customisation.
