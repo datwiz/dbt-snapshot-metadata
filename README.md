@@ -22,9 +22,20 @@ Some example considerations could include:
   - when new records are inserted, add operational processing metadata information to each record
   - when an existing record is closed or end-dated, update operational metadata fields with operational processing metadata
 
-```mermaid
-title before and after snapshot tables
-```
+Example snapshot table out-of-the-box
+| txn_date | thing_id | status| description | dbt_scd_id | dbt_updated_at | dbt_valid_from | dbt_valid_to |
+| -------- | -------- | ----- | ----------- | ---------- | -------------- | -------------- | ------------ |
+| 2023-01-24 | 1      | PENDING | new thing | _dbt-scd-id_ | _snapshot-dttm-0_ | _snapshot-dttm-0_ |  _snapshot-dttm-1_ |
+| 2023-01-25 | 1      | OPEN | in progress | _dbt-scd-id_ | _snapshot-dttm-1_ | _snapshot-dttm-1_ | _snapshot-dttm-2_ |
+| 2023-01-26 | 1      | CLOSED | thing done | _dbt-scd-id_ | _snapshot-dttm-2_ | _snapshot-dttm-2_ | NULL |
+
+Example snapshot table with enhanced metadata
+| txn_date | thing_id | status| description | insert_process_id | update_process_id | effective_start_timestamp| effective_end_timestamp | insert_timestamp | update_timestamp | ... dbt-metadata-fields ... |
+| -------- | --- | ----- | ----- | ---- | -- | ----- | ---------- | -------------- | -------------- | ------------ |
+| 2023-01-24 | 1      | PENDING | new thing | proc-A | proc-B | _snapshot-dttm-0_ |  _snapshot-dttm-1_ | _snapshot-dttm-0_ | _snapshot-dttm-1_ | _dbt-metadata-fields_ |
+| 2023-01-25 | 1      | OPEN | in progress | proc-B |  proc-C | _snapshot-dttm-1_ | _snapshot-dttm-2_ | _snapshot-dttm-1_ | _snapshot-dttm-2_ | _dbt-metadata-fields_ |
+| 2023-01-26 | 1      | CLOSED | thing done | proc-C | NULL | _snapshot-dttm-2_ | 9999-12-31T23:59:59+00 | _snapshot-dttm-2 | NULL | _dbt-metadata-fields_ |
+
 
 ### Bonus - High End Date/Timestamp
 In addition to the operational support and audit requirements, there can also be a legacy migration complication
