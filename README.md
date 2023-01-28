@@ -122,7 +122,7 @@ in the `dbt_project.yml` file.  The dbt snapshot strategy processing uses the un
 standard dbt columns so modifications to processing code is not required.
 
 dbt project macro `./macros/default__build_snapshot_table.sql`
-```
+```sql
 {% macro default__build_snapshot_table(strategy, sql) %}
 {#- customised snapshot table to inject additional operational metadata #}
 
@@ -154,7 +154,7 @@ the additional operational metadata fields to the `insertions` common table expr
 The dbt `invocation_id` is used again as the `process_id` for inserts on new records and updates that
 close old records.
 
-```
+```sql
     ...
     insertions as (
 
