@@ -38,12 +38,7 @@ erDiagram
   }
 
 ```
-| txn_dt | id | status | dbt_scd_id | dbt_updated_at | dbt_valid_from | dbt_valid_to |
-| ------ | -- | ------ | ---------- | -------------- | -------------- | ------------ |
-| 2023-01-24 | 1      | PENDING | _dbt-scd-id_ | _dttm-0_ | _dttm-0_ | _dttm-1_ |
-| 2023-01-25 | 1      | OPEN    | _dbt-scd-id_ | _dttm-1_ | _dttm-1_ | _dttm-2_ |
-| 2023-01-26 | 1      | CLOSED  | _dbt-scd-id_ | _dttm-2_ | _dttm-2_ | NULL     |
-
+![standard snapshot table](./images/standard-snapshot-table.png)
 ```mermaid
 ---
 title: Example snapshot table with enhanced metadata
@@ -65,11 +60,7 @@ erDiagram
     datetime dbt_valid_to
   }
 ```
-| txn_dt | id | status| insert_id | update_id | start_dttm | end_dttm | insert_dttm | update_dttm | ... dbt-metadata-fields ... |
-| -------- | --- | ----- | ----- | ---- | ----- | ---------- | -------------- | -------------- | ------------ |
-| 2023-01-24 | 1      | PENDING | proc-A | proc-B | _dttm-0_ |  _dttm-1_ | _dttm-0_ | _dttm-1_ | _dbt-metadata-fields_ |
-| 2023-01-25 | 1      | OPEN | proc-B |  proc-C | _dttm-1_ | _dttm-2_ | _-dttm-1_ | _dttm-2_ | _dbt-metadata-fields_ |
-| 2023-01-26 | 1      | CLOSED | proc-C | NULL | _dttm-2_ | 9999-12-31T23:59:59 | _dttm-2 | NULL | _dbt-metadata-fields_ |
+![enhanced snapshot table](./images/enhanced-snapshot-table.png)
 
 
 ### Bonus - High End Date/Timestamp
