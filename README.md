@@ -1,10 +1,15 @@
-# Adding Operational Metadata to dbt Snapshots
+# Enhancing dbt Snapshots with Operational Metadata
 The out-of-the-box [dbt snapshots](https://docs.getdbt.com/docs/build/snapshots) provide change data capture (CDC) capability for tracking the changes to data in your
 data lake or data warehouse.  The dbt snapshot metadata columns enable a view of change to data - which records 
 have been updated when.   However, the dbt snapshot metadata doesn't provide a view of processing audit - which process
-or job was responsible for the changes.  Additional operational metadata is required for process level auditability.
+or job was responsible for the changes.  Processing level auditability requires additional operational metadata.
 
-In those cases where greater operational visibility is required, the dbt snapshot behaviour (snapshot strategies)
+dbt Snapshot behaviour (snapshot strategies) likely provides the desired logic for detecting and managing data change.
+No change to the CDC strategies or snapshot pipeline processing is desired, but additional operational metadata
+fields must be set and carried through 
+
+
+Wkhere greater operational visibility is required, the dbt snapshot behaviour (snapshot strategies)
 may provide the right logic for detecting and managing data change.  No change to the change detection strategy
 or snapshot sequence of pipeline processing is desired, but additional operational metadata fields should be set and
 carried through the processing pipeline along with the data.
