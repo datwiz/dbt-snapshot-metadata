@@ -4,23 +4,17 @@ data lake or data warehouse.  The dbt snapshot metadata columns enable a view of
 have been updated when.   However, the dbt snapshot metadata doesn't provide a view of processing audit - which process
 or job was responsible for the changes.  Processing level auditability requires additional operational metadata.
 
-dbt Snapshot behaviour (snapshot strategies) likely provides the desired logic for detecting and managing data change.
-No change to the CDC strategies or snapshot pipeline processing is desired, but additional operational metadata
-fields must be set and carried through 
-
-
-Wkhere greater operational visibility is required, the dbt snapshot behaviour (snapshot strategies)
-may provide the right logic for detecting and managing data change.  No change to the change detection strategy
-or snapshot sequence of pipeline processing is desired, but additional operational metadata fields should be set and
-carried through the processing pipeline along with the data.
+The out-of-the-box dbt snapshot strategies (rules for detecting changes) likely provides the desired logic for detecting and managing data change.
+No change to the snapshot strategies or snapshot pipeline processing is desired, but additional operational metadata
+fields must be set and carried through with the data.
 
 ## Objectives
 The need for greater fidelity of operational metadata can be driven by both operational and governance requirements.
 Some example considerations could include:
 * use the out-of-the-box dbt snapshot logic and strategies for Change Data Capture (CDC)
-* add operational metadata fields to snapshot tables with processing details for operational support and audit
+* add operational metadata fields to snapshot tables with processing details for ops support and audit
   - when new records are inserted, add operational processing metadata information to each record
-  - when an existing record is closed or end-dated, update operational metadata fields with operational processing metadata
+  - when an existing record is closed or end-dated, update operational metadata fields with processing metadata
 
 ```mermaid
 ---
@@ -67,7 +61,7 @@ in the enhanced table could be derived, but requires more complex SQL with a lef
 materialization decision, there is the trade off between ease of access vs additional storage requirements.
 
 ### NULLS vs High End Date/Timestamp
-In addition to the operational support and audit requirements, there can also be a legacy migration complication
+In addition to the ops support and audit requirements, there can also be a legacy migration complication
 related to how open records (the most current version of the record) are represented snapshots.  dbt snapshots
 represent open records using `NULL` values for `valid_to` fields.
 In legacy data lakes or data warehouses, the open records often are identified by using a
