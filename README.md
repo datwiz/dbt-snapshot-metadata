@@ -30,11 +30,11 @@ Example snapshot table out-of-the-box
 | 2023-01-26 | 1      | CLOSED  | _dbt-scd-id_ | _dttm-2_ | _dttm-2_ | NULL     |
 
 Example snapshot table with enhanced metadata
-| txn_dt | id | status| insert_proc_id | update_proc_id | effective_start_dttm | effective_end_dttm | insert_dttm | update_dttm | ... dbt-metadata-fields ... |
+| txn_dt | id | status| insert_id | update_id | start_dttm | end_dttm | insert_dttm | update_dttm | ... dbt-metadata-fields ... |
 | -------- | --- | ----- | ----- | ---- | ----- | ---------- | -------------- | -------------- | ------------ |
 | 2023-01-24 | 1      | PENDING | proc-A | proc-B | _dttm-0_ |  _dttm-1_ | _dttm-0_ | _dttm-1_ | _dbt-metadata-fields_ |
 | 2023-01-25 | 1      | OPEN | proc-B |  proc-C | _dttm-1_ | _dttm-2_ | _-dttm-1_ | _dttm-2_ | _dbt-metadata-fields_ |
-| 2023-01-26 | 1      | CLOSED | proc-C | NULL | _dttm-2_ | 9999-12-31T23:59:59+00 | _dttm-2 | NULL | _dbt-metadata-fields_ |
+| 2023-01-26 | 1      | CLOSED | proc-C | NULL | _dttm-2_ | 9999-12-31T23:59:59 | _dttm-2 | NULL | _dbt-metadata-fields_ |
 
 
 ### Bonus - High End Date/Timestamp
