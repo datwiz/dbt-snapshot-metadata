@@ -4,17 +4,17 @@ data lake or data warehouse.  The dbt snapshot metadata columns enable a view of
 have been updated when.   However, the dbt snapshot metadata doesn't provide a view of processing audit - which process
 or job was responsible for the changes.  Processing level auditability requires additional operational metadata.
 
-The out-of-the-box dbt snapshot strategies (rules for detecting changes) likely provides the desired logic for detecting and managing data change.
+The out-of-the-box dbt snapshot strategies (rules for detecting changes) likely provide the desired logic for detecting and managing data change.
 No change to the snapshot strategies or snapshot pipeline processing is desired, but additional operational metadata
 fields must be set and carried through with the data.
 
 ## Objectives
 The need for greater fidelity of operational metadata can be driven by both operational and governance requirements.
-Some example considerations could include:
-* use the out-of-the-box dbt snapshot logic and strategies for Change Data Capture (CDC)
-* add operational metadata fields to snapshot tables with processing details for ops support and audit
+Example considerations could include:
+* use of the out-of-the-box dbt snapshot logic and strategies for Change Data Capture (CDC)
+* addition of operational metadata fields to snapshot tables with processing details for ops support and audit
   - when new records are inserted, add operational processing metadata information to each record
-  - when an existing record is closed or end-dated, update operational metadata fields with processing metadata
+  - when existing records are closed or end-dated, update operational metadata fields with processing metadata
 
 ```mermaid
 ---
@@ -56,9 +56,11 @@ erDiagram
 ```
 ![enhanced snapshot table](./images/enhanced-snapshot-table.png)
 
-Note that with the inclusion of an `insert_id` in the snapshot input dbt model/view the same operational metadata contained
-in the enhanced table could be derived, but requires more complex SQL with a left outer self-join.  As with any
-materialization decision, there is the trade off between ease of access vs additional storage requirements.
+Aside from including a new process_id value into records, these enhancements don't add new information to the
+table.  Rather they are a materialisation of the operational data that is easier to access.  The same information
+could be derived from standard dbt metadata fields, but would require a more complex SQL statement that includes
+a left outer self join.  As with any materialization decision, there is the trade off between ease of access
+vs additional storage requirements.
 
 ### NULLS vs High End Date/Timestamp
 In addition to the ops support and audit requirements, there can also be a legacy migration complication
